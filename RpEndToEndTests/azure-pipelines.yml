@@ -1,0 +1,62 @@
+# Node.js
+# Build a general Node.js project with npm.
+# Add steps that analyze code, save build artifacts, deploy, and more:
+# https://docs.microsoft.com/azure/devops/pipelines/languages/javascript
+
+pool:
+  #vmImage: 'windows-latest'
+  name: "$(PoolName)"
+  Agent.Name: "$(AgentName)"
+
+jobs:
+- job: Prod
+  steps:
+  - task: CmdLine@2
+    inputs:
+      script: "npm install"
+
+  - task: CmdLine@2
+    inputs:
+      script: "protractor protractor-$(Env).config.ts"
+      workingDirectory: "$(Build.SourcesDirectory)"
+
+  - task: PublishTestResults@2
+    inputs:
+      testResultsFormat: "JUnit"
+      testResultsFiles: 'TestResults\*xml'
+      mergeTestResults: false
+    continueOnError: true
+    condition: succeededOrFailed()
+
+  - task: PublishPipelineArtifact@1
+    inputs:
+     targetPath: '$(Pipeline.Workspace)/s/BeautifulReporter'
+     artifact: 'Beautiful-Reporter-Results-Prod'
+     publishLocation: 'pipeline'
+    condition: succeededOrFailed()
+
+- job: Staging
+  steps:
+  - task: CmdLine@2
+    inputs:
+      script: "npm install"
+
+  - task: CmdLine@2
+    inputs:
+      script: "protractor protractor-$(EnvSt).config.ts"
+      workingDirectory: "$(Build.SourcesDirectory)"
+
+  - task: PublishTestResults@2
+    inputs:
+      testResultsFormat: "JUnit"
+      testResultsFiles: 'TestResults\*xml'
+      mergeTestResults: false
+    continueOnError: true
+    condition: succeededOrFailed()
+
+  - task: PublishPipelineArtifact@1
+    inputs:
+     targetPath: '$(Pipeline.Workspace)/s/BeautifulReporter'
+     artifact: 'Beautiful-Reporter-Results-Stage'
+     publishLocation: 'pipeline'
+    condition: succeededOrFailed()  
